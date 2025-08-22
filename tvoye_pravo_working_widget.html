@@ -1,0 +1,412 @@
+<!-- Рабочий виджет чата "Твоё право" для Tilda -->
+<!-- Стили для виджета чата -->
+<style>
+.legal-chat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    height: 500px;
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+    display: none;
+    flex-direction: column;
+    z-index: 9999;
+    font-family: 'Arial', sans-serif;
+}
+
+.legal-chat-widget.active {
+    display: flex;
+}
+
+.legal-chat-header {
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.legal-chat-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.legal-chat-subtitle {
+    font-size: 12px;
+    opacity: 0.8;
+    margin: 2px 0 0 0;
+}
+
+.legal-mode-selection {
+    padding: 20px;
+    text-align: center;
+    background: white;
+}
+
+.legal-mode-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 14px;
+    cursor: pointer;
+    margin: 5px;
+    font-weight: 500;
+    transition: transform 0.2s;
+}
+
+.legal-mode-btn:hover {
+    transform: translateY(-2px);
+}
+
+.legal-chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background: #f5f5f5;
+    display: none;
+}
+
+.legal-message {
+    margin-bottom: 10px;
+    max-width: 80%;
+    padding: 10px;
+    border-radius: 10px;
+    word-wrap: break-word;
+}
+
+.legal-message.user {
+    background: #E3E3E3;
+    margin-left: auto;
+}
+
+.legal-message.bot {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.legal-chat-input {
+    padding: 15px;
+    border-top: 1px solid #eee;
+    display: none;
+    background: white;
+    border-radius: 0 0 15px 15px;
+}
+
+.legal-chat-input input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    margin-right: 10px;
+    outline: none;
+    width: calc(100% - 80px);
+}
+
+.legal-chat-input button {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.legal-chat-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    z-index: 9999;
+    transition: transform 0.3s;
+    color: white;
+    font-weight: bold;
+    font-size: 24px;
+}
+
+.legal-chat-button:hover {
+    transform: scale(1.1);
+}
+
+.legal-typing-indicator {
+    display: none;
+    padding: 10px 15px;
+    background: #f1f3f5;
+    border-radius: 18px;
+    align-self: flex-start;
+    color: #666;
+    font-style: italic;
+    margin: 0 15px 10px 15px;
+}
+
+.legal-back-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    margin-right: 10px;
+    padding: 5px;
+    border-radius: 50%;
+    display: none;
+}
+
+.legal-back-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 480px) {
+    .legal-chat-widget {
+        width: 100%;
+        height: 100%;
+        bottom: 0;
+        right: 0;
+        border-radius: 0;
+    }
+    
+    .legal-chat-header {
+        border-radius: 0;
+    }
+    
+    .legal-chat-button {
+        bottom: 10px;
+        right: 10px;
+    }
+}
+</style>
+
+<!-- HTML структура виджета -->
+<div class="legal-chat-button" onclick="toggleLegalChat()">
+    💬
+</div>
+
+<div class="legal-chat-widget" id="legalChatWidget">
+    <div class="legal-chat-header">
+        <div style="display: flex; align-items: center;">
+            <button class="legal-back-btn" id="legalBackBtn" onclick="goBackToModes()">←</button>
+            <div>
+                <h3>Твоё право</h3>
+                <div class="legal-chat-subtitle">Юридические услуги онлайн</div>
+            </div>
+        </div>
+        <span style="cursor: pointer;" onclick="toggleLegalChat()">✕</span>
+    </div>
+    
+    <!-- Выбор режима -->
+    <div class="legal-mode-selection" id="legalModeSelection">
+        <p style="margin-bottom: 20px; color: #666;">Выберите действие:</p>
+        <button class="legal-mode-btn" onclick="selectLegalMode('consultation')">Консультация</button>
+        <button class="legal-mode-btn" onclick="selectLegalMode('booking')">Быстрая запись</button>
+    </div>
+    
+    <!-- Сообщения -->
+    <div class="legal-chat-messages" id="legalChatMessages">
+        <div class="legal-message bot">
+            Добро пожаловать! Я помогу вам с юридическими вопросами.
+        </div>
+    </div>
+    
+    <!-- Индикатор печатания -->
+    <div class="legal-typing-indicator" id="legalTypingIndicator">
+        Обрабатываю ваш вопрос...
+    </div>
+    
+    <!-- Поле ввода -->
+    <div class="legal-chat-input" id="legalChatInput">
+        <input type="text" id="legalMessageInput" placeholder="Напишите ваше сообщение..." onkeypress="handleLegalKeyPress(event)">
+        <button onclick="sendLegalMessage()">→</button>
+    </div>
+</div>
+
+<!-- Скрипт для работы чата -->
+<script>
+console.log('=== Твоё право - Чат виджет начинает загрузку ===');
+
+// НАСТРОЙКА: URL вашего Flask сервера
+const LEGAL_API_URL = 'https://42c759928dec.ngrok-free.app/api/chat';
+
+let legalIsOpen = false;
+let legalCurrentMode = null;
+let legalThreadId = null;
+
+// Генерируем уникальный ID пользователя
+const LEGAL_USER_ID = 'legal_user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+function toggleLegalChat() {
+    console.log('Переключение чата, isOpen:', legalIsOpen);
+    const widget = document.getElementById('legalChatWidget');
+    const toggle = document.querySelector('.legal-chat-button');
+    
+    legalIsOpen = !legalIsOpen;
+    
+    if (legalIsOpen) {
+        widget.classList.add('active');
+        toggle.style.display = 'none';
+        console.log('Чат открыт');
+    } else {
+        widget.classList.remove('active');
+        toggle.style.display = 'flex';
+        resetLegalChat();
+        console.log('Чат закрыт');
+    }
+}
+
+function resetLegalChat() {
+    legalCurrentMode = null;
+    legalThreadId = null;
+    document.getElementById('legalModeSelection').style.display = 'block';
+    document.getElementById('legalChatMessages').style.display = 'none';
+    document.getElementById('legalChatInput').style.display = 'none';
+    document.getElementById('legalBackBtn').style.display = 'none';
+    document.getElementById('legalChatMessages').innerHTML = '';
+}
+
+function selectLegalMode(mode) {
+    console.log('Выбран режим:', mode);
+    legalCurrentMode = mode;
+    
+    document.getElementById('legalModeSelection').style.display = 'none';
+    document.getElementById('legalChatMessages').style.display = 'block';
+    document.getElementById('legalChatInput').style.display = 'block';
+    document.getElementById('legalBackBtn').style.display = 'block';
+    
+    // Очищаем сообщения
+    document.getElementById('legalChatMessages').innerHTML = '';
+    
+    if (mode === 'consultation') {
+        addLegalMessage('Вы в режиме консультации. Задайте ваш вопрос:', 'bot');
+    } else if (mode === 'booking') {
+        addLegalMessage('Отлично! Давайте запишем вас к адвокату. Как вас зовут?', 'bot');
+    }
+    
+    document.getElementById('legalMessageInput').focus();
+}
+
+function goBackToModes() {
+    console.log('Возврат к выбору режима');
+    legalCurrentMode = null;
+    legalThreadId = null;
+    document.getElementById('legalModeSelection').style.display = 'block';
+    document.getElementById('legalChatMessages').style.display = 'none';
+    document.getElementById('legalChatInput').style.display = 'none';
+    document.getElementById('legalBackBtn').style.display = 'none';
+}
+
+function handleLegalKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendLegalMessage();
+    }
+}
+
+async function sendLegalMessage() {
+    const input = document.getElementById('legalMessageInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    console.log('Отправляю сообщение:', message);
+    
+    // Добавляем сообщение пользователя
+    addLegalMessage(message, 'user');
+    input.value = '';
+    
+    // Показываем индикатор печати
+    showLegalTyping(true);
+    
+    // Отключаем кнопку отправки
+    const sendBtn = document.querySelector('.legal-chat-input button');
+    sendBtn.disabled = true;
+    
+    try {
+        console.log('Отправляю запрос к API:', LEGAL_API_URL);
+        
+        const response = await fetch(LEGAL_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify({
+                message: message,
+                thread_id: legalThreadId
+            })
+        });
+        
+        console.log('Статус ответа:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Получен ответ от API:', data);
+        
+        // Скрываем индикатор печати
+        showLegalTyping(false);
+        
+        // Добавляем ответ бота
+        if (data.response) {
+            addLegalMessage(data.response, 'bot');
+            if (data.thread_id) {
+                legalThreadId = data.thread_id;
+                console.log('Обновлен thread_id:', legalThreadId);
+            }
+        } else if (data.error) {
+            addLegalMessage('Ошибка: ' + data.error, 'bot');
+        } else {
+            addLegalMessage('Извините, произошла ошибка. Попробуйте позже.', 'bot');
+        }
+        
+    } catch (error) {
+        console.error('Ошибка отправки сообщения:', error);
+        showLegalTyping(false);
+        addLegalMessage('Не удалось подключиться к серверу. Проверьте соединение.', 'bot');
+    } finally {
+        // Включаем кнопку отправки
+        sendBtn.disabled = false;
+    }
+}
+
+function addLegalMessage(text, sender) {
+    const messagesContainer = document.getElementById('legalChatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `legal-message ${sender}`;
+    messageDiv.textContent = text;
+    
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function showLegalTyping(show) {
+    const indicator = document.getElementById('legalTypingIndicator');
+    if (show) {
+        indicator.style.display = 'block';
+        document.getElementById('legalChatMessages').scrollTop = document.getElementById('legalChatMessages').scrollHeight;
+    } else {
+        indicator.style.display = 'none';
+    }
+}
+
+// Автофокус при открытии
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Твоё право - Чат виджет загружен');
+    console.log('Server URL:', LEGAL_API_URL);
+    console.log('User ID:', LEGAL_USER_ID);
+});
+
+console.log('=== Твоё право - Скрипт виджета выполнен ===');
+</script>
